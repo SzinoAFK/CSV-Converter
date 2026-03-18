@@ -61,9 +61,12 @@ def aggregate_minutes(df, decimals):
     df_out = (
         df.groupby("minute")[numeric_cols]
         .mean(numeric_only=True)
-        .round(decimals)
         .reset_index()
     )
+    if decimals == 0:
+        df_out[numeric_cols] = df_out[numeric_cols].round(0).astype("Int64")
+    else:
+        df_out[numeric_cols] = df_out[numeric_cols].round(decimals)
     df_out.rename(columns={"minute": "Timestamp"}, inplace=True)
     return df_out
 
