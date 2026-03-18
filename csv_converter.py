@@ -156,7 +156,7 @@ class App(ctk.CTk):
 
         self._input_path  = ctk.StringVar()
         self._output_path = ctk.StringVar()
-        self._decimals = ctk.DoubleVar(value=2)
+        self._decimals_var = ctk.StringVar(value="2")
         self._mode        = ctk.StringVar(value=list(MODES.keys())[0])
 
         self._build_ui()
@@ -198,20 +198,19 @@ class App(ctk.CTk):
         # Nachkommastellen (nur bei Minuten-Modi sichtbar)
         self._dec_card = ctk.CTkFrame(self, fg_color=CARD, corner_radius=14)
         self._dec_card.pack(fill="x", padx=48, pady=8)
-        top = ctk.CTkFrame(self._dec_card, fg_color="transparent")
-        top.pack(fill="x", padx=20, pady=(14, 4))
-        ctk.CTkLabel(top, text="Nachkommastellen", font=FONT_LABEL,
+        row = ctk.CTkFrame(self._dec_card, fg_color="transparent")
+        row.pack(fill="x", padx=20, pady=14)
+        ctk.CTkLabel(row, text="Nachkommastellen", font=FONT_LABEL,
                      text_color=TEXT).pack(side="left")
-        self._dec_label = ctk.CTkLabel(top, text="2", font=FONT_LABEL,
-                                        text_color=ACCENT)
-        self._dec_label.pack(side="right")
-        self._slider = ctk.CTkSlider(
-            self._dec_card, from_=0, to=6, number_of_steps=6,
-            variable=self._decimals, command=self._update_dec_label,
-            button_color=ACCENT, button_hover_color=ACCENT2,
-            progress_color=ACCENT, fg_color="#2d3148"
+        ctk.CTkLabel(row, text="(0 – 6)", font=FONT_SMALL,
+                     text_color=MUTED).pack(side="left", padx=8)
+        self._dec_entry = ctk.CTkEntry(
+            row, textvariable=self._decimals_var,
+            width=60, height=36, font=FONT_LABEL,
+            fg_color="#0f1117", border_color="#2d3148",
+            text_color=ACCENT, justify="center"
         )
-        self._slider.pack(fill="x", padx=20, pady=(0, 14))
+        self._dec_entry.pack(side="right")
 
         # Start-Button
         self._btn = ctk.CTkButton(
@@ -268,7 +267,7 @@ class App(ctk.CTk):
         self._output_path.set(base + ext)
 
     def _update_dec_label(self, val=None):
-        self._dec_label.configure(text=str(int(self._decimals.get())))
+        pass  # nicht mehr benötigt (Eingabefeld)
 
     def _pick_input(self):
         path = filedialog.askopenfilename(
@@ -296,7 +295,13 @@ class App(ctk.CTk):
     def _start(self):
         inp  = self._input_path.get().strip()
         out  = self._output_path.get().strip()
-        decs = int(round(self._decimals.get()))
+        try:
+            decs = int(self._decimals_var.get())
+            if not 0 <= decs <= 6:
+                raise ValueError
+        except ValueError:
+            self._set_status("⚠  Nachkommastellen: bitte eine Zahl zwischen 0 und 6 eingeben.", ERROR)
+            return
 
         if not inp:
             self._set_status("⚠  Bitte eine Eingabe-Datei wählen.", ERROR); return
