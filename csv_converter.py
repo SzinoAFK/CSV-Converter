@@ -43,13 +43,11 @@ def load_csv(input_file):
     df = pd.read_csv(input_file, encoding="utf-8-sig", decimal=",")
     time_str = df["Time"].str.replace(r"\s*\+\d{2}:\d{2}$", "", regex=True).str.strip()
     combined = df["Date"].str.strip() + " " + time_str
-    # Versuche dd.mm.yyyy zuerst, dann mm.dd.yyyy
-    df["datetime"] = pd.to_datetime(combined, format="%d.%m.%Y %H:%M:%S.%f", errors="coerce")
-    fallback = df["datetime"].isna()
-    if fallback.any():
-        df.loc[fallback, "datetime"] = pd.to_datetime(
-            combined[fallback], format="%m.%d.%Y %H:%M:%S.%f", errors="coerce"
-        )
+    # Format automatisch erkennen: wenn Tag-Teil > 12 → mm.dd.yyyy, sonst dd.mm.yyyy
+    sample_parts = df["Date"].iloc[0].split(".")
+    is_american = int(sample_parts[1]) > 12
+    fmt = "%m.%d.%Y %H:%M:%S.%f" if is_american else "%d.%m.%Y %H:%M:%S.%f"
+    df["datetime"] = pd.to_datetime(combined, format=fmt, errors="coerce")
     return df
 
 
