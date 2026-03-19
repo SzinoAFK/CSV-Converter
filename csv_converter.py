@@ -42,11 +42,14 @@ def load_csv(input_file):
     """CSV einlesen und datetime-Spalte erzeugen."""
     df = pd.read_csv(input_file, encoding="utf-8-sig", decimal=",")
     time_str = df["Time"].str.replace(r"\s*\+\d{2}:\d{2}$", "", regex=True).str.strip()
-    df["datetime"] = pd.to_datetime(
-        df["Date"].str.strip() + " " + time_str,
-        format="%d.%m.%Y %H:%M:%S.%f",
-        errors="coerce"
-    )
+    combined = df["Date"].str.strip() + " " + time_str
+    # Versuche dd.mm.yyyy zuerst, dann mm.dd.yyyy
+    df["datetime"] = pd.to_datetime(combined, format="%d.%m.%Y %H:%M:%S.%f", errors="coerce")
+    fallback = df["datetime"].isna()
+    if fallback.any():
+        df.loc[fallback, "datetime"] = pd.to_datetime(
+            combined[fallback], format="%m.%d.%Y %H:%M:%S.%f", errors="coerce"
+        )
     return df
 
 
